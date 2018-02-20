@@ -1,14 +1,12 @@
+//XMLParser.c
+
+#include "XMLParser.h"
+
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
 
-enum EntityType {
-	content = 0,
-	startTag,
-	endTag
-};
-
-void parseXML(const char *xmlString) {
+void parseXML(const char *xmlString, XMLParserListener *listener) {
 	size_t length = strlen(xmlString);
 	char c_prev = '0';
 	char *string = NULL;
@@ -16,18 +14,26 @@ void parseXML(const char *xmlString) {
 	size_t currentEntityCount = 0;
 	for (int i = 0; i < length; i++) {
 		const char c = xmlString[i];
-
+		
 		if (c == '<') {
-			printf("\ncontent: %s\n", string);
 			entityType = startTag;
+			
+			if (string != NULL) {
+				listener->parsedContent(string);
+			}
+
 			free(string);
 			currentEntityCount = 0;
 			string = NULL;
 		} else if (c == '>') {
 			if (entityType == endTag) {
-				printf("\nendtag: %s\n", string);
+				if (string != NULL) {
+					listener->endedTag(string);
+				}
 			} else {
-				printf("\nstarttag: %s\n", string);
+				if (string != NULL) {
+					listener->beganTag(string);
+				}
 			}
 			
 			entityType = content;
